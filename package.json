@@ -29,6 +29,7 @@
     "autoprefixer": "^10.4.20",
     "css-loader": "^6.11.0",
     "electron": "32.0.1",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
@@ -46,12 +47,17 @@
   },
   "license": "MIT",
   "dependencies": {
+    "date-and-time": "^3.5.0",
     "electron-squirrel-startup": "^1.0.1",
+    "path-browserify": "^1.0.1",
     "postcss": "^8.4.42",
     "postcss-loader": "^8.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
-    "react-router-dom": "^6.26.2"
+    "react-router-dom": "^6.26.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "zklib": "^0.2.11"
   }
 }

@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from './Modal';
+import { MachineData } from './types/types';
 
 type MachineFormData = {
   ip: string;
-  port: string;
+  port: number;
   name: string;
 };
+interface addMachineFormProps {
+  addMachineHandler: (data: MachineData) => void;
+}
 
-const AddMachineForm: React.FC = () => {
+const AddMachineForm: React.FC<addMachineFormProps> = (
+  props: addMachineFormProps
+) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<
+    'neutral' | 'success' | 'failure'
+  >('neutral');
+  const { addMachineHandler } = props;
   const {
     register,
     handleSubmit,
@@ -17,10 +27,28 @@ const AddMachineForm: React.FC = () => {
   } = useForm<MachineFormData>();
 
   const onSubmit = (data: MachineFormData) => {
-    console.log('Machine Data: ', data);
-    setIsModalOpen(false); // Close modal on submit
+    const dataToSend: MachineData = {
+      ...data,
+      status: connectionStatus === 'success' ? 'active' : 'inactive',
+    };
+    addMachineHandler(dataToSend);
+    setIsModalOpen(false);
   };
-
+  const onTestConnection = async (data: MachineFormData) => {
+    try {
+      const isConnected = await window.electronAPI.invoke(
+        'test-connection',
+        data
+      );
+      data;
+      setConnectionStatus(isConnected ? 'success' : 'failure');
+    } catch (error) {
+      setConnectionStatus('failure');
+    }
+  };
+  const onFieldChange = () => {
+    setConnectionStatus('neutral');
+  };
   return (
     <div>
       {/* Add Machine Button */}
@@ -49,6 +77,7 @@ const AddMachineForm: React.FC = () => {
               type="text"
               className="border border-gray-300 rounded-md w-full p-2"
               {...register('ip', { required: 'IP Address is required' })}
+              onChange={onFieldChange}
             />
             {errors.ip && (
               <span className="text-red-500 text-sm">{errors.ip.message}</span>
@@ -63,6 +92,7 @@ const AddMachineForm: React.FC = () => {
               type="text"
               className="border border-gray-300 rounded-md w-full p-2"
               {...register('port', { required: 'Port is required' })}
+              onChange={onFieldChange}
             />
             {errors.port && (
               <span className="text-red-500 text-sm">
@@ -88,8 +118,21 @@ const AddMachineForm: React.FC = () => {
           </div>
         </form>
         <div>
-          <button className="rounded-md bg-gray-300 p-2">
-            Test Connection
+          <button
+            className={`rounded-md p-2 ${
+              connectionStatus === 'success'
+                ? 'bg-green-500'
+                : connectionStatus === 'failure'
+                ? 'bg-red-500'
+                : 'bg-gray-300'
+            }`}
+            onClick={handleSubmit(onTestConnection)}
+          >
+            {connectionStatus === 'success'
+              ? 'Connected'
+              : connectionStatus === 'failure'
+              ? 'Failed to connect'
+              : 'Test Connection'}
           </button>
         </div>
       </Modal>

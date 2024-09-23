@@ -14,12 +14,12 @@ const Sidebar: React.FC = () => {
         </li>
         <li>
           <div className="w-11/12 bg-gray-950 rounded-md align-middle text-center p-2 m-auto">
-            <Link to="/">About</Link>
+            <Link to="/about">About</Link>
           </div>
         </li>
         <li>
           <div className="w-11/12 bg-gray-950 rounded-md align-middle text-center p-2 m-auto">
-            <Link to="/">Settings</Link>
+            <Link to="/settings">Settings</Link>
           </div>
         </li>
       </ul>
