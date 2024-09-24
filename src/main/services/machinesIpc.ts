@@ -1,13 +1,18 @@
 import { ipcMain } from 'electron';
 import { getDatabase } from '../database';
 import { MachineData } from './types';
-import { connectInstance, createInstance } from './attendance';
-ipcMain.handle('sync-machine', async (event, data) => {
-  const db = await getDatabase();
-
-  console.log('macine data', data);
-  return 'hii from electron main';
-});
+import { connectInstance, createInstance, syncAttendance } from './attendance';
+ipcMain.handle(
+  'sync-attendance',
+  async (
+    event,
+    data: { data: MachineData; startTime: number; endTime: number }
+  ) => {
+    console.log('data.dat', data.data);
+    await syncAttendance(data.startTime, data.endTime, data.data);
+    return 'Attendance syncing completed.';
+  }
+);
 
 ipcMain.handle('add-machine', async (event, data: MachineData) => {
   const { ip, name, port, status } = data;
@@ -16,13 +21,11 @@ ipcMain.handle('add-machine', async (event, data: MachineData) => {
     'INSERT INTO machines (name, ip, port, status, last_synced) VALUES (?, ?, ?, ?, ?)',
     [name, ip, port, status, new Date()]
   );
-  console.log('add-machine', data);
 });
 
 ipcMain.handle('get-machines', async (event) => {
   const db = await getDatabase();
   const result = await db.all(`SELECT * FROM machines`);
-  console.log('result:', result);
   return result;
 });
 

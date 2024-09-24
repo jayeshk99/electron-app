@@ -1,6 +1,9 @@
 import { Attendance, MachineData } from './types';
 import ZKLib from 'zklib';
 import * as date from 'date-and-time';
+import { getDatabase } from '../database';
+import axios from 'axios';
+import { chunkArray } from '../utils';
 export const getAttendance = async (
   attendanceDate: string,
   machineData: MachineData
@@ -35,6 +38,7 @@ export const createInstance = async (data: MachineData) => {
       timeout: 40000,
       attendanceParser: 'v6.60',
     });
+
     return instance;
   } catch (error) {
     console.log(`Failed to create instance: ${error.message}`);
@@ -98,4 +102,46 @@ export const filterAttendanceByDate = (
         timestamp: date.format(checkInDate, 'YYYY-MM-DD HH:mm:ss'),
       } as Attendance;
     });
+};
+
+export const syncAttendance = async (
+  startTime: number,
+  endTime: number,
+  data: MachineData
+) => {
+  try {
+    const machineInstance = await createInstance(data);
+    await connectInstance(machineInstance);
+    const attendanceData = await fetchAttendanceData(machineInstance);
+    const filteredData = attendanceData.filter(
+      (row) =>
+        new Date(row.timestamp) >= new Date(startTime) &&
+        new Date(row.timestamp) <= new Date(endTime)
+    );
+    if (filteredData.length) {
+      const chunkedArrays = chunkArray(filteredData, 1000);
+      // send data over webhook
+      let webhookURL =
+        'https://webhook.site/de0c1c59-068c-4b2d-be84-d06a4b618e03';
+
+      // Send a POST request to the Webhook URL
+      for (let array of chunkedArrays) {
+        try {
+          const response = await axios.post(webhookURL, array);
+          console.log('Data sent successfully');
+          console.log('Response:', response.data);
+        } catch (error) {
+          // send mail if fails
+        }
+      }
+    }
+    // update last synced time of a machine
+    const db = await getDatabase();
+    await db.run(
+      `UPDATE machines SET last_synced = ? WHERE ip = ? AND port = ?`,
+      [new Date().toISOString(), data.ip, data.port]
+    );
+  } catch (error) {
+    console.log('error in syncing attendance', error);
+  }
 };

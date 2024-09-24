@@ -14,15 +14,7 @@ const Home: React.FC = () => {
 
   async function fetchMachinesList() {
     const data = await window.electronAPI.invoke('get-machines');
-    // const data2 = await window.electronAPI.invoke('add-machine', {
-    //   ip: '10.10.110',
-    //   name: 'abc',
-    //   port: 4565,
-    //   status: 'inactive',
-    // });
-    console.log('data:', data);
     setMachinesList(data);
-    console.log('data infrontend:', data);
   }
   const addMachineHandler = async (data: MachineData) => {
     try {
@@ -35,7 +27,13 @@ const Home: React.FC = () => {
   };
   const syncMachineHandler = async (machine: MachineData) => {
     try {
-      await window.electronAPI.invoke('sync-machine', machine);
+      const startTime = new Date().setHours(0, 0, 0, 0);
+      const endTime = new Date().setHours(23, 59, 59, 0);
+      await window.electronAPI.invoke('sync-attendance', {
+        startTime: startTime,
+        endTime: endTime,
+        data: machine,
+      });
       console.log(`Synced machine: ${machine.name}`);
     } catch (error) {
       console.error(`Failed to sync machine: ${machine.name}`, error);
@@ -58,7 +56,7 @@ const Home: React.FC = () => {
   };
   useEffect(() => {
     fetchMachinesList();
-  }, []);
+  }, [addMachineHandler]);
   return (
     <div className="p-6">
       <AddMachineForm addMachineHandler={addMachineHandler} />
